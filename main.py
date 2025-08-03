@@ -1,6 +1,8 @@
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import os
+import json
+import re
 from dotenv import load_dotenv
 from subFunctions.chatDelete.delChat import deleteMessage as delChat
 
@@ -11,18 +13,21 @@ appToken = os.getenv('socketToken')
 userIDs = os.getenv('userID').split(',')
 timeRange = int(os.getenv('timeRange'), 10)
 
+with open('commands.json', 'r', encoding='utf-8') as j:
+    cmnds = json.load(j)
+
+
 print(f'BotToken: {botToken}')
 print(f'SocketToken: {appToken}')
 print(f'UserID: {userIDs}')
+# print(f'Commandments: {cmnds}')
 
 # Initialize the app
 app = App(token=botToken)
 
-# Listen to ALL message events first to debug
-
 
 @app.event("message")
-def debug_all_messages(body, say, logger):
+def messageEvent(body, say, logger):
     print("\n" + "="*50)
     print("📩 ANY MESSAGE EVENT RECEIVED!")
     print("="*50)
@@ -34,10 +39,17 @@ def debug_all_messages(body, say, logger):
     chnlTy = event.get('channel_type')
     subtype = event.get('subtype')
 
+    match = re.search(r'--\S+', text)
+    if match:
+        cmnd = match.group()
+    else:
+        cmnd = text
+
     print(f"🔍 Event details:")
     print(f"  - User: {curUser}")
     print(f"  - Expected Users: {userIDs}")
     print(f"  - Text: '{text}'")
+    print(f"  - Command: '{cmnd}'")
     print(f"  - Channel: {channel}")
     print(f"  - Channel Type: {chnlTy}")
     print(f"  - Subtype: {subtype}")
@@ -56,19 +68,18 @@ def debug_all_messages(body, say, logger):
     print(f"✅ Processing message from user: {curUser}")
 
     # Check if this is the correct user and contains the trigger
-    if curUser in userIDs and "--del" in text.lower():
-        print("🔔 TRIGGER MATCHED!")
-        print("🧹 Chat delete function called.")
-        say("✅ Function Triggered! Running function...")
-        delChat(userToken, channel, timeRange)
+    if curUser in userIDs:
+        if cmnd == "--del":
+            print("🔔 TRIGGER MATCHED!")
+            print("🧹 Chat delete function called.")
+            say("✅ Function Triggered! Running function...")
+            delChat(userToken, channel, timeRange)
+        elif cmnd in cmnds:
+            say(cmnds[cmnd])
+        else:
+            print(f"❌ Trigger not found in text: '{text}'")
     else:
-        reasons = []
-        if curUser not in userIDs:
-            reasons.append(
-                f"Wrong user (got {curUser}, expected {userIDs})")
-        if "--del" not in text.lower():
-            reasons.append(f"Trigger not found in text: '{text}'")
-        print(f"❌ Trigger not matched: {' | '.join(reasons)}")
+        print(f"Wrong user (got {curUser}, expected {userIDs})")
 
     print("="*50 + "\n")
 
