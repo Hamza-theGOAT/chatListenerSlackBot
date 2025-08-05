@@ -15,6 +15,7 @@ timeRange = int(os.getenv('timeRange'), 10)
 
 with open('commands.json', 'r', encoding='utf-8') as j:
     cmnds = json.load(j)
+cmndList = '\n'.join(cmnds.keys())
 
 
 print(f'BotToken: {botToken}')
@@ -45,16 +46,6 @@ def messageEvent(body, say, logger):
     else:
         cmnd = text
 
-    print(f"🔍 Event details:")
-    print(f"  - User: {curUser}")
-    print(f"  - Expected Users: {userIDs}")
-    print(f"  - Text: '{text}'")
-    print(f"  - Command: '{cmnd}'")
-    print(f"  - Channel: {channel}")
-    print(f"  - Channel Type: {chnlTy}")
-    print(f"  - Subtype: {subtype}")
-    print(f"  - Bot ID: {event.get('bot_id')}")
-
     # Skip bot messages
     if event.get('bot_id') or subtype == 'bot_message':
         print("🤖 Skipping bot message")
@@ -67,13 +58,25 @@ def messageEvent(body, say, logger):
 
     print(f"✅ Processing message from user: {curUser}")
 
+    print(f"🔍 Event details:")
+    print(f"  - User: {curUser}")
+    print(f"  - Expected Users: {userIDs}")
+    print(f"  - Text: '{text}'")
+    print(f"  - Command: '{cmnd}'")
+    print(f"  - Channel: {channel}")
+    print(f"  - Channel Type: {chnlTy}")
+    print(f"  - Subtype: {subtype}")
+    print(f"  - Bot ID: {event.get('bot_id')}")
+
     # Check if this is the correct user and contains the trigger
     if curUser in userIDs:
         if cmnd == "--del":
-            print("🔔 TRIGGER MATCHED!")
             print("🧹 Chat delete function called.")
             say("✅ Function Triggered! Running function...")
             delChat(userToken, channel, timeRange)
+        elif cmnd == "--list":
+            print("User Requested List of Commands")
+            say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
         elif cmnd in cmnds:
             say(cmnds[cmnd])
         else:
