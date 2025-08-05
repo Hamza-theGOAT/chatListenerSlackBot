@@ -1,0 +1,5 @@
+{
+    "--CmdInit1": "[Text to return in chat1]",
+    "--CmdInit2": "[Text to return in chat2]",
+    "--CmdInit3": "[Text to return in chat3]"
+}

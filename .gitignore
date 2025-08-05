@@ -1,3 +1,4 @@
 .env
+commands.json
 subFunctions.__pycache__
 subFunctions.chatDelete.__pycache__
