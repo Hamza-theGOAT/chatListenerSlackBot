@@ -1,8 +1,10 @@
+from slack_sdk import WebClient
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import os
 import json
 import re
+import random
 from dotenv import load_dotenv
 from subFunctions.chatDelete.delChat import deleteMessage as delChat
 
@@ -13,9 +15,13 @@ appToken = os.getenv('socketToken')
 userIDs = os.getenv('userID').split(',')
 timeRange = int(os.getenv('timeRange'), 10)
 
+client = WebClient(token=botToken)
+
 with open('commands.json', 'r', encoding='utf-8') as j:
     cmnds = json.load(j)
 cmndList = '\n'.join(cmnds.keys())
+
+meDir = os.path.join('images', 'memes')
 
 
 print(f'BotToken: {botToken}')
@@ -77,6 +83,16 @@ def messageEvent(body, say, logger):
         elif cmnd == "--list":
             print("User Requested List of Commands")
             say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
+        elif cmnd == "--meme":
+            img = random.choice([f for f in os.listdir(meDir)])
+            path = os.path.join(meDir, img)
+            print("🖼️ Sending image to Slack channel...")
+            client.files_upload_v2(
+                channel=channel,
+                file=path,
+                title="Here's your meme, MiLord",
+                initial_comment="Behold thy meme!"
+            )
         elif cmnd in cmnds:
             say(cmnds[cmnd])
         else:
