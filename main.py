@@ -53,7 +53,7 @@ def messageEvent(body, say, logger):
         cmnd = text
 
     # Skip bot messages
-    if event.get('bot_id') or subtype == 'bot_message':
+    if ('[bot]' not in text) and (event.get('bot_id') or subtype == 'bot_message'):
         print("🤖 Skipping bot message")
         return
 
