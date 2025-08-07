@@ -104,13 +104,17 @@ def messageEvent(body, say, logger):
         elif "--list/" in cmnd:
             dirz = listDir(cmnd)
             say(f"Here's the list of sub-directories, MiLord...\n{dirz}")
-        elif cmnd == "--meme":
-            img = random.choice([f for f in os.listdir(meDir)])
-            path = os.path.join(meDir, img)
+        elif cmnd.startswith("--meme"):
+            path = os.path.join(meDir, *cmnd.split('/')[1:])
+            print(f"Extracted Path: {path}")
+            if not os.path.isdir(path):
+                path = meDir
+            img = random.choice([f for f in os.listdir(path)])
+            imgPath = os.path.join(path, img)
             print("🖼️ Sending image to Slack channel...")
             client.files_upload_v2(
                 channel=channel,
-                file=path,
+                file=imgPath,
                 title="Here's your meme, MiLord",
                 initial_comment="Behold thy meme!"
             )
