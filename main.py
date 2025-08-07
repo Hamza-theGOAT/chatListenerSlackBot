@@ -21,6 +21,10 @@ with open('commands.json', 'r', encoding='utf-8') as j:
     cmnds = json.load(j)
 cmndList = '\n'.join(cmnds.keys())
 
+with open('picPaths.json', 'r') as j:
+    pics = json.load(j)
+picList = '\n'.join(pics.keys())
+
 meDir = os.path.join('images', 'memes')
 
 
@@ -31,6 +35,15 @@ print(f'UserID: {userIDs}')
 
 # Initialize the app
 app = App(token=botToken)
+
+
+def listDir(cmnd):
+    folders = cmnd.split('/')[1:]
+    path = os.path.join(*folders)
+    dirz = '\n'.join(os.listdir(path))
+
+    print(f"User Requested List of directories in '{path}'")
+    return dirz
 
 
 @app.event("message")
@@ -78,11 +91,19 @@ def messageEvent(body, say, logger):
     if curUser in userIDs:
         if cmnd == "--del":
             print("🧹 Chat delete function called.")
-            say("✅ Function Triggered! Running function...")
             delChat(userToken, channel, timeRange)
+            client.files_upload_v2(
+                channel=channel,
+                file=pics['--nuke'],
+                title="I am death, destroyer of both worlds",
+                initial_comment=cmnds['--judgement']
+            )
         elif cmnd == "--list":
             print("User Requested List of Commands")
             say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
+        elif "--list/" in cmnd:
+            dirz = listDir(cmnd)
+            say(f"Here's the list of sub-directories, MiLord...\n{dirz}")
         elif cmnd == "--meme":
             img = random.choice([f for f in os.listdir(meDir)])
             path = os.path.join(meDir, img)
