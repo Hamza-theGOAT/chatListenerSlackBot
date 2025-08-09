@@ -21,9 +21,9 @@ with open('commands.json', 'r', encoding='utf-8') as j:
     cmnds = json.load(j)
 cmndList = '\n'.join(cmnds.keys())
 
-with open('picPaths.json', 'r') as j:
-    pics = json.load(j)
-picList = '\n'.join(pics.keys())
+with open('paths.json', 'r') as j:
+    pathz = json.load(j)
+picList = '\n'.join(pathz.keys())
 
 meDir = os.path.join('images', 'memes')
 
@@ -94,7 +94,7 @@ def messageEvent(body, say, logger):
             delChat(userToken, channel, timeRange)
             client.files_upload_v2(
                 channel=channel,
-                file=pics['--nuke'],
+                file=pathz['--nuke'],
                 title="I am death, destroyer of both worlds",
                 initial_comment=cmnds['--judgement']
             )
