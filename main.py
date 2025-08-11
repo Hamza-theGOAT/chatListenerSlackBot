@@ -125,6 +125,20 @@ def messageEvent(body, say, logger):
             )
         elif cmnd in cmnds:
             say(cmnds[cmnd])
+        elif cmnd == '--sayL':
+            say(f"Here's the list MiLord:\n{audList}")
+        elif cmnd.startswith('--say'):
+            cmnd = cmnd.split('/')[1:][0]
+            print(f"Audio Command Received: {cmnd}")
+            if cmnd in auds:
+                client.files_upload_v2(
+                    channel=channel,
+                    file=auds[cmnd],
+                    title=f"{cmnd}.mp3",
+                    initial_comment="Here's your GOAT'ed audios, MiLord ..."
+                )
+            else:
+                say("Invalid Audio Command, MiLord!")
         else:
             print(f"❌ Trigger not found in text: '{text}'")
     else:
