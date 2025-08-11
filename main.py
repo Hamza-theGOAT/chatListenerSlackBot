@@ -25,6 +25,10 @@ with open('paths.json', 'r') as j:
     pathz = json.load(j)
 picList = '\n'.join(pathz.keys())
 
+with open('audPaths.json', 'r') as j:
+    auds = json.load(j)
+audList = '\n'.join(auds.keys())
+
 meDir = os.path.join('images', 'memes')
 
 
@@ -32,6 +36,7 @@ print(f'BotToken: {botToken}')
 print(f'SocketToken: {appToken}')
 print(f'UserID: {userIDs}')
 # print(f'Commandments: {cmnds}')
+# print(f'Commandments: {auds}')
 
 # Initialize the app
 app = App(token=botToken)
