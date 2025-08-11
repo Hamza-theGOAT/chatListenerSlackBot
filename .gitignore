@@ -1,6 +1,4 @@
 .env
-/commands.json
-/paths.json
-images/memes
+img/memes
 subFunctions.__pycache__
 subFunctions.chatDelete.__pycache__
