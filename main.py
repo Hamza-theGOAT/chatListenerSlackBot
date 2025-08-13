@@ -155,6 +155,14 @@ def messageEvent(body, say, logger):
     print("="*50 + "\n")
 
 
+# Test slash command function
+@app.command("/test")
+def repeatText(ack, respond, command, say):
+    # Acknowledge command request
+    ack()
+    say(f"{command['text']}")
+
+
 def main():
     print("-"*50)
     handler = SocketModeHandler(app, appToken)
