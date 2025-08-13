@@ -63,86 +63,79 @@ def messageEvent(body, say, logger):
     channel = event.get('channel', '')
     chnlTy = event.get('channel_type')
     subtype = event.get('subtype')
-
-    match = re.search(r'--\S+', text)
-    if match:
-        cmnd = match.group()
-    else:
-        cmnd = text
-
-    # Skip bot messages
-    if ('[bot]' not in text) and (event.get('bot_id') or subtype == 'bot_message'):
-        print("🤖 Skipping bot message")
-        return
+    botID = event.get('bot_id')
 
     # Skip messages without text
     if not text:
         print("📝 Skipping message without text")
         return
+    # Skip bot messages
+    if ('[bot]' not in text) and (botID or subtype == 'bot_message'):
+        print("🤖 Skipping bot message")
+        return
+    if curUser not in userIDs:
+        print(f"Wrong user (got {curUser}, expected: {userIDs})")
+        say("The Light does not shine upon thee!!!")
+        return
+
+    cmnd = re.search(r"--\S+", text)
+    cmnd = cmnd.group() if cmnd else text
 
     print(f"✅ Processing message from user: {curUser}")
 
     print(f"🔍 Event details:")
-    print(f"  - User: {curUser}")
-    print(f"  - Expected Users: {userIDs}")
     print(f"  - Text: '{text}'")
     print(f"  - Command: '{cmnd}'")
     print(f"  - Channel: {channel}")
-    print(f"  - Channel Type: {chnlTy}")
-    print(f"  - Subtype: {subtype}")
-    print(f"  - Bot ID: {event.get('bot_id')}")
 
-    # Check if this is the correct user and contains the trigger
-    if curUser in userIDs:
-        if cmnd == "--del":
-            print("🧹 Chat delete function called.")
-            delChat(userToken, channel, timeRange)
+    # Execute the given trigger
+    if cmnd == "--del":
+        print("🧹 Chat delete function called.")
+        delChat(userToken, channel, timeRange)
+        client.files_upload_v2(
+            channel=channel,
+            file=pics['--nuke'],
+            title="I am death, destroyer of both worlds",
+            initial_comment=cmnds['--judgement']
+        )
+    elif cmnd == "--comL":
+        print("User Requested List of Commands")
+        say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
+    elif cmnd in cmnds:
+        say(cmnds[cmnd])
+    elif "--list/" in cmnd:
+        dirz = listDir(cmnd)
+        say(f"Here's the list of sub-directories, MiLord...\n{dirz}")
+    elif cmnd.startswith("--meme"):
+        path = os.path.join(meDir, *cmnd.split('/')[1:])
+        print(f"Extracted Path: {path}")
+        if not os.path.isdir(path):
+            path = meDir
+        img = random.choice([f for f in os.listdir(path)])
+        imgPath = os.path.join(path, img)
+        print("🖼️ Sending image to Slack channel...")
+        client.files_upload_v2(
+            channel=channel,
+            file=imgPath,
+            title="Here's your meme, MiLord",
+            initial_comment="Behold thy meme!"
+        )
+    elif cmnd == '--sayL':
+        say(f"Here's the list MiLord:\n{audList}")
+    elif cmnd.startswith('--say'):
+        cmnd = cmnd.split('/')[1:][0]
+        print(f"Audio Command Received: {cmnd}")
+        if cmnd in auds:
             client.files_upload_v2(
                 channel=channel,
-                file=pathz['--nuke'],
-                title="I am death, destroyer of both worlds",
-                initial_comment=cmnds['--judgement']
+                file=auds[cmnd],
+                title=f"{cmnd}.mp3",
+                initial_comment="Here's your GOAT'ed words, MiLord ..."
             )
-        elif cmnd == "--list":
-            print("User Requested List of Commands")
-            say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
-        elif "--list/" in cmnd:
-            dirz = listDir(cmnd)
-            say(f"Here's the list of sub-directories, MiLord...\n{dirz}")
-        elif cmnd.startswith("--meme"):
-            path = os.path.join(meDir, *cmnd.split('/')[1:])
-            print(f"Extracted Path: {path}")
-            if not os.path.isdir(path):
-                path = meDir
-            img = random.choice([f for f in os.listdir(path)])
-            imgPath = os.path.join(path, img)
-            print("🖼️ Sending image to Slack channel...")
-            client.files_upload_v2(
-                channel=channel,
-                file=imgPath,
-                title="Here's your meme, MiLord",
-                initial_comment="Behold thy meme!"
-            )
-        elif cmnd in cmnds:
-            say(cmnds[cmnd])
-        elif cmnd == '--sayL':
-            say(f"Here's the list MiLord:\n{audList}")
-        elif cmnd.startswith('--say'):
-            cmnd = cmnd.split('/')[1:][0]
-            print(f"Audio Command Received: {cmnd}")
-            if cmnd in auds:
-                client.files_upload_v2(
-                    channel=channel,
-                    file=auds[cmnd],
-                    title=f"{cmnd}.mp3",
-                    initial_comment="Here's your GOAT'ed audios, MiLord ..."
-                )
-            else:
-                say("Invalid Audio Command, MiLord!")
         else:
-            print(f"❌ Trigger not found in text: '{text}'")
+            say("Invalid Audio Command, MiLord!")
     else:
-        print(f"Wrong user (got {curUser}, expected {userIDs})")
+        print(f"❌ Trigger not found in text: '{text}'")
 
     print("="*50 + "\n")
 
