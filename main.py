@@ -21,15 +21,15 @@ with open('commands.json', 'r', encoding='utf-8') as j:
     cmnds = json.load(j)
 cmndList = '\n'.join(cmnds.keys())
 
-with open('paths.json', 'r') as j:
-    pathz = json.load(j)
-picList = '\n'.join(pathz.keys())
+with open('picPaths.json', 'r') as j:
+    pics = json.load(j)
+picList = '\n'.join(pics.keys())
 
 with open('audPaths.json', 'r') as j:
     auds = json.load(j)
 audList = '\n'.join(auds.keys())
 
-meDir = os.path.join('images', 'memes')
+meDir = os.path.join('img', 'memes')
 
 
 print(f'BotToken: {botToken}')
@@ -89,6 +89,8 @@ def messageEvent(body, say, logger):
     print(f"  - Channel: {channel}")
 
     # Execute the given trigger
+
+    # Function Triggers
     if cmnd == "--del":
         print("🧹 Chat delete function called.")
         delChat(userToken, channel, timeRange)
@@ -98,14 +100,20 @@ def messageEvent(body, say, logger):
             title="I am death, destroyer of both worlds",
             initial_comment=cmnds['--judgement']
         )
+
+    # Written Lines Triggers
     elif cmnd == "--comL":
         print("User Requested List of Commands")
         say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
     elif cmnd in cmnds:
         say(cmnds[cmnd])
+
+    # List of sub-directories Trigger
     elif "--list/" in cmnd:
         dirz = listDir(cmnd)
         say(f"Here's the list of sub-directories, MiLord...\n{dirz}")
+
+    # Random Meme request Trigger
     elif cmnd.startswith("--meme"):
         path = os.path.join(meDir, *cmnd.split('/')[1:])
         print(f"Extracted Path: {path}")
@@ -120,8 +128,12 @@ def messageEvent(body, say, logger):
             title="Here's your meme, MiLord",
             initial_comment="Behold thy meme!"
         )
+
+    # List of audio commands request Trigger
     elif cmnd == '--sayL':
         say(f"Here's the list MiLord:\n{audList}")
+
+    # Audio command Trigger
     elif cmnd.startswith('--say'):
         cmnd = cmnd.split('/')[1:][0]
         print(f"Audio Command Received: {cmnd}")
@@ -134,7 +146,10 @@ def messageEvent(body, say, logger):
             )
         else:
             say("Invalid Audio Command, MiLord!")
+
+    # Invalid Command Result
     else:
+        say("Given Command holds no action!")
         print(f"❌ Trigger not found in text: '{text}'")
 
     print("="*50 + "\n")
