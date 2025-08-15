@@ -239,6 +239,59 @@ def handle_bot_control(ack, body, client):
         )
 
 
+@app.view("tempModel")
+def handle_modal_submission(ack, body, view, client):
+    ack()
+
+    values = view["state"]["values"]
+    print(f"Value Values Returned:\n{values}")
+
+    selections = {}
+
+    # Extract all selections
+    for blockID, blockData in values.items():
+        for actionID, actionData in blockData.items():
+            if actionData.get("selected_option"):
+                # Get the category name (remove "_select" suffix)
+                category = actionID.replace("_select", "")
+                selectedKey = actionData["selected_option"]["value"]
+
+                # Get the actual value from your proc data
+                if category in proc and selectedKey in proc[category]:
+                    selections[category] = {
+                        "key": selectedKey,
+                        "value": proc[category][selectedKey]
+                    }
+
+    # Send the selected values to chat
+    userID = body["user"]["id"]
+
+    if selections:
+        for category, selection in selections.items():
+            # Post the actual content from your JSON
+            client.chat_postMessage(
+                channel=userID,
+                text=f"🎯 **{category.title()}**: {selection['key']}\n{selection['value']}"
+            )
+
+        # Send summary
+        summary = f"✅ Executed {len(selections)} selection(s)"
+        client.chat_postMessage(
+            channel=userID,
+            text=summary
+        )
+    else:
+        client.chat_postMessage(
+            channel=userID,
+            text="❌ No selections were made!"
+        )
+
+
+@app.action(re.compile(r".*_select"))
+def handleSelectionTemp(ack):
+    ack()  # To pacify async selection by acknowleding it
+
+
 def main():
     print("-"*50)
     handler = SocketModeHandler(app, appToken)
