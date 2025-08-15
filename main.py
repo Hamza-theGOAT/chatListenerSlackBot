@@ -17,9 +17,9 @@ timeRange = int(os.getenv('timeRange'), 10)
 
 client = WebClient(token=botToken)
 
-with open('commands.json', 'r', encoding='utf-8') as j:
-    cmnds = json.load(j)
-cmndList = '\n'.join(cmnds.keys())
+with open('proclamations.json', 'r', encoding='utf-8') as j:
+    proc = json.load(j)
+procList = '\n'.join(proc.keys())
 
 with open('picPaths.json', 'r') as j:
     pics = json.load(j)
@@ -66,8 +66,8 @@ def messageEvent(body, say, logger):
     botID = event.get('bot_id')
 
     # Skip messages without text
-    if not text:
-        print("📝 Skipping message without text")
+    if not text or not text.startswith('--'):
+        print("📝 Skipping message without text/Command")
         return
     # Skip bot messages
     if ('[bot]' not in text) and (botID or subtype == 'bot_message'):
@@ -98,16 +98,18 @@ def messageEvent(body, say, logger):
             channel=channel,
             file=pics['--nuke'],
             title="I am death, destroyer of both worlds",
-            initial_comment=cmnds['--judgement']
+            initial_comment=proc['biblical']['--judgement']
         )
 
     # Written Lines Triggers
     elif cmnd == "--comL":
         print("User Requested List of Commands")
-        say(f"Here are the list of Commands, MiLord ...\n{cmndList}")
-    elif cmnd in cmnds:
-        say(cmnds[cmnd])
-
+        say(f"Here are the list of Commands, MiLord ...\n{procList}")
+    elif '/' not in cmnd:
+        for key, val in proc.items():
+            if cmnd in val:
+                say(val[cmnd])
+    
     # List of sub-directories Trigger
     elif "--list/" in cmnd:
         dirz = listDir(cmnd)
