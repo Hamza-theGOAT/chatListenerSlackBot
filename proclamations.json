@@ -1,5 +1,17 @@
 {
-    "--CmdInit1": "[Text to return in chat1]",
-    "--CmdInit2": "[Text to return in chat2]",
-    "--CmdInit3": "[Text to return in chat3]"
+    "category1": {
+        "--CmdInit1": "[Text to return in chat1]",
+        "--CmdInit2": "[Text to return in chat2]",
+        "--CmdInit3": "[Text to return in chat3]"
+    },
+    "category2": {
+        "--CmdInit1": "[Text to return in chat1]",
+        "--CmdInit2": "[Text to return in chat2]",
+        "--CmdInit3": "[Text to return in chat3]"
+    },
+    "category3": {
+        "--CmdInit1": "[Text to return in chat1]",
+        "--CmdInit2": "[Text to return in chat2]",
+        "--CmdInit3": "[Text to return in chat3]"
+    }
 }
