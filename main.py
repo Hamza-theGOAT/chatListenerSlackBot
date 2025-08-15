@@ -109,7 +109,7 @@ def messageEvent(body, say, logger):
         for key, val in proc.items():
             if cmnd in val:
                 say(val[cmnd])
-    
+
     # List of sub-directories Trigger
     elif "--list/" in cmnd:
         dirz = listDir(cmnd)
@@ -163,6 +163,80 @@ def repeatText(ack, respond, command, say):
     # Acknowledge command request
     ack()
     say(f"{command['text']}")
+
+
+@app.command("/multi_select")
+def handle_bot_control(ack, body, client):
+    # Immediate acknowledgment
+    ack()
+
+    # Create options from your loaded data
+    catList1 = [
+        {"text": {"type": "plain_text", "text": cmd}, "value": cmd}
+        # Slack limits to 100 options
+        for cmd in list(proc['category1'].keys())[:25]
+    ]
+
+    catList2 = [
+        {"text": {"type": "plain_text", "text": cmd}, "value": cmd}
+        for cmd in list(proc['category2'].keys())[:25]
+    ]
+
+    catList3 = [
+        {"text": {"type": "plain_text", "text": proc}, "value": proc}
+        for proc in list(proc['category3'].keys())[:25]
+    ]
+
+    try:
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view={
+                "type": "modal",
+                "callback_id": "tempModal",
+                "title": {"type": "plain_text", "text": "Bot Control"},
+                "submit": {"type": "plain_text", "text": "Execute"},
+                "close": {"type": "plain_text", "text": "Cancel"},
+                "blocks": [
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": "*Choose Category1:*"},
+                        "accessory": {
+                            "type": "static_select",
+                            "action_id": "category1_select",
+                            "placeholder": {"type": "plain_text", "text": "Select Category1"},
+                            "options": catList1
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": "*Choose Category2:*"},
+                        "accessory": {
+                            "type": "static_select",
+                            "action_id": "category2_select",
+                            "placeholder": {"type": "plain_text", "text": "Select Category2"},
+                            "options": catList2
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": "*Choose Category3:*"},
+                        "accessory": {
+                            "type": "static_select",
+                            "action_id": "category3_select",
+                            "placeholder": {"type": "plain_text", "text": "Select Category3"},
+                            "options": catList3
+                        }
+                    }
+                ]
+            }
+        )
+    except Exception as e:
+        print(f"Modal error: {e}")
+        client.chat_postEphemeral(
+            channel=body["channel_id"],
+            user=body["user_id"],
+            text="❌ Modal failed to open. Please try again."
+        )
 
 
 def main():
