@@ -219,12 +219,22 @@ def handleProcDisplay(ack, body, client):
         )
 
 
-@app.view("tempModel")
-def handle_modal_submission(ack, body, view, client):
+@app.action(re.compile(r".*_select"))
+def handleProcAction(ack):
+    ack()  # To pacify async selection by acknowleding it
+
+
+@app.view("procHandler")
+def handleProcSubmission(ack, body, view, client):
     ack()
 
     values = view["state"]["values"]
-    print(f"Value Values Returned:\n{values}")
+    # print(f"Value Values Returned:\n{values}")
+
+    # Get the original channel from private_metadata
+    ogCh = view.get("private_metadata")
+    if not ogCh:
+        ogCh = body["user"]["id"]
 
     selections = {}
 
@@ -243,33 +253,18 @@ def handle_modal_submission(ack, body, view, client):
                         "value": proc[category][selectedKey]
                     }
 
-    # Send the selected values to chat
-    userID = body["user"]["id"]
-
     if selections:
         for category, selection in selections.items():
             # Post the actual content from your JSON
             client.chat_postMessage(
-                channel=userID,
-                text=f"🎯 **{category.title()}**: {selection['key']}\n{selection['value']}"
+                channel=ogCh,
+                text=f"🎯 {category.title()}: {selection['key']}\n{selection['value']}"
             )
-
-        # Send summary
-        summary = f"✅ Executed {len(selections)} selection(s)"
-        client.chat_postMessage(
-            channel=userID,
-            text=summary
-        )
     else:
         client.chat_postMessage(
-            channel=userID,
-            text="❌ No selections were made!"
+            channel=ogCh,
+            text="❌ <@{body['user']['id']}> made no selections!"
         )
-
-
-@app.action(re.compile(r".*_select"))
-def handleSelectionTemp(ack):
-    ack()  # To pacify async selection by acknowleding it
 
 
 def main():
