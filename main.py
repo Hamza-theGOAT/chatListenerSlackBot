@@ -42,6 +42,41 @@ print(f'UserID: {userIDs}')
 app = App(token=botToken)
 
 
+def slackListView(data: dict, channelID=None):
+    blocks = []
+    for key, val in data.items():
+        keyL = [
+            {"text": {"type": "plain_text", "text": cmd}, "value": cmd}
+            for cmd in list(val.keys())
+        ]
+        elm = {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Choose {key}:*"},
+            "accessory": {
+                "type": "static_select",
+                "action_id": f"{key}_select",
+                "placeholder": {"type": "plain_text", "text": f"Select {key}"},
+                "options": keyL
+            }
+        }
+        blocks.append(elm)
+
+    modalView = {
+        "type": "modal",
+        "callback_id": "procHandler",
+        "title": {"type": "plain_text", "text": "Multiple Selections"},
+        "submit": {"type": "plain_text", "text": "Submit"},
+        "close": {"type": "plain_text", "text": "Cancel"},
+        "blocks": blocks
+    }
+
+    # Store the original channel in private_metadata
+    if channelID:
+        modalView["private_metadata"] = channelID
+
+    return modalView
+
+
 def listDir(cmnd):
     folders = cmnd.split('/')[1:]
     path = os.path.join(*folders)
@@ -158,77 +193,22 @@ def messageEvent(body, say, logger):
 
 
 # Test slash command function
-@app.command("/test")
+@app.command("/echo")
 def repeatText(ack, respond, command, say):
     # Acknowledge command request
     ack()
     say(f"{command['text']}")
 
 
-@app.command("/multi_select")
-def handle_bot_control(ack, body, client):
+@app.command("/procmenu")
+def handleProcDisplay(ack, body, client):
     # Immediate acknowledgment
     ack()
-
-    # Create options from your loaded data
-    catList1 = [
-        {"text": {"type": "plain_text", "text": cmd}, "value": cmd}
-        # Slack limits to 100 options
-        for cmd in list(proc['category1'].keys())[:25]
-    ]
-
-    catList2 = [
-        {"text": {"type": "plain_text", "text": cmd}, "value": cmd}
-        for cmd in list(proc['category2'].keys())[:25]
-    ]
-
-    catList3 = [
-        {"text": {"type": "plain_text", "text": proc}, "value": proc}
-        for proc in list(proc['category3'].keys())[:25]
-    ]
 
     try:
         client.views_open(
             trigger_id=body["trigger_id"],
-            view={
-                "type": "modal",
-                "callback_id": "tempModal",
-                "title": {"type": "plain_text", "text": "Bot Control"},
-                "submit": {"type": "plain_text", "text": "Execute"},
-                "close": {"type": "plain_text", "text": "Cancel"},
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": "*Choose Category1:*"},
-                        "accessory": {
-                            "type": "static_select",
-                            "action_id": "category1_select",
-                            "placeholder": {"type": "plain_text", "text": "Select Category1"},
-                            "options": catList1
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": "*Choose Category2:*"},
-                        "accessory": {
-                            "type": "static_select",
-                            "action_id": "category2_select",
-                            "placeholder": {"type": "plain_text", "text": "Select Category2"},
-                            "options": catList2
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": "*Choose Category3:*"},
-                        "accessory": {
-                            "type": "static_select",
-                            "action_id": "category3_select",
-                            "placeholder": {"type": "plain_text", "text": "Select Category3"},
-                            "options": catList3
-                        }
-                    }
-                ]
-            }
+            view=slackListView(proc, body["channel_id"])
         )
     except Exception as e:
         print(f"Modal error: {e}")
