@@ -1,0 +1,30 @@
+{
+    "cardType1": {
+        "blanks": [
+            "Sentences with blank spaces like ____.",
+            "Sentences with blank spaces like ____.",
+            "Sentences with blank spaces like ____.",
+            "Sentences with blank spaces like ____."
+        ],
+        "fillWords": [
+            "oneLiners, words, phrases",
+            "oneLiners, words, phrases",
+            "oneLiners, words, phrases",
+            "oneLiners, words, phrases"
+        ]
+    },
+    "cardType2": {
+        "blanks": [
+            "Sentences with blank spaces like ____.",
+            "Sentences with blank spaces like ____.",
+            "Sentences with blank spaces like ____.",
+            "Sentences with blank spaces like ____."
+        ],
+        "fillWords": [
+            "oneLiners, words, phrases",
+            "oneLiners, words, phrases",
+            "oneLiners, words, phrases",
+            "oneLiners, words, phrases"
+        ]
+    }
+}
