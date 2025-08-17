@@ -29,6 +29,9 @@ with open('audPaths.json', 'r') as j:
     auds = json.load(j)
 audList = '\n'.join(auds.keys())
 
+with open('blankCards.json', 'r', encoding='utf-8') as j:
+    blankCards = json.load(j)
+
 meDir = os.path.join('img', 'memes')
 
 
@@ -183,6 +186,12 @@ def messageEvent(body, say, logger):
             )
         else:
             say("Invalid Audio Command, MiLord!")
+
+    # Blank Que Game
+    elif cmnd.startswith('--card/'):
+        ty = cmnd.split('/')[1:][0]
+        say(random.choice(blankCards[ty]['blanks']))
+        say(random.choice(blankCards[ty]['fillWords']))
 
     # Invalid Command Result
     else:
