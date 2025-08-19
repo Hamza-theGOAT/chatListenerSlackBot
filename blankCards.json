@@ -11,7 +11,11 @@
             "oneLiners, words, phrases",
             "oneLiners, words, phrases",
             "oneLiners, words, phrases"
-        ]
+        ],
+        "cardImg": "relative//path//to//img.svg",
+        "cardImgMod": "relative//path//to//imgMod.svg",
+        "maxChars": 30,
+        "lineHeight": 2.5
     },
     "cardType2": {
         "blanks": [
@@ -25,6 +29,10 @@
             "oneLiners, words, phrases",
             "oneLiners, words, phrases",
             "oneLiners, words, phrases"
-        ]
+        ],
+        "cardImg": "relative//path//to//img.svg",
+        "cardImgMod": "relative//path//to//imgMod.svg",
+        "maxChars": 30,
+        "lineHeight": 2.5
     }
 }
