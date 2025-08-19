@@ -1,4 +1,5 @@
 .env
 img/memes
+img/cardImg
 subFunctions.__pycache__
 subFunctions.chatDelete.__pycache__

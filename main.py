@@ -191,8 +191,20 @@ def messageEvent(body, say, logger):
     # Blank Que Game
     elif cmnd.startswith('--card/'):
         ty = cmnd.split('/')[1:][0]
-        say(random.choice(blankCards[ty]['blanks']))
-        say(random.choice(blankCards[ty]['fillWords']))
+        topTxt = random.choice(blankCards[ty]['blanks'])
+        botTxt = random.choice(blankCards[ty]['fillWords'])
+        maxChars = blankCards[ty]['maxChars']
+        lineHeight = blankCards[ty]['lineHeight']
+        img = blankCards[ty]['cardImg']
+        imgMod = blankCards[ty]['cardImgMod']
+        imgModp = imgMod.replace('.svg', '.png')
+        replaceSVGtxt(img, topTxt, botTxt, imgMod, maxChars, lineHeight)
+        client.files_upload_v2(
+            channel=channel,
+            file=imgModp,
+            title=f"{ty}_Card.svg",
+            initial_comment="Here's your Card, MiLord ..."
+        )
 
     # Invalid Command Result
     else:
