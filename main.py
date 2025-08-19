@@ -7,6 +7,7 @@ import re
 import random
 from dotenv import load_dotenv
 from subFunctions.chatDelete.delChat import deleteMessage as delChat
+from subFunctions.cardTemp.main import replaceSVGtxt
 
 load_dotenv()
 userToken = os.getenv('userToken')
