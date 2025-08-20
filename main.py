@@ -21,6 +21,10 @@ client = WebClient(token=botToken)
 with open('proclamations.json', 'r', encoding='utf-8') as j:
     proc = json.load(j)
 procList = '\n'.join(proc.keys())
+procHeads = []
+for key, val in proc.items():
+    for sKey, sVal in val.items():
+        procHeads.append(sKey)
 
 with open('picPaths.json', 'r') as j:
     pics = json.load(j)
@@ -144,7 +148,7 @@ def messageEvent(body, say, logger):
     elif cmnd == "--comL":
         print("User Requested List of Commands")
         say(f"Here are the list of Commands, MiLord ...\n{procList}")
-    elif '/' not in cmnd:
+    elif cmnd in procHeads:
         for key, val in proc.items():
             if cmnd in val:
                 say(val[cmnd])
@@ -172,6 +176,7 @@ def messageEvent(body, say, logger):
 
     # List of audio commands request Trigger
     elif cmnd == '--sayL':
+        print("The Lord has requested the list of audios")
         say(f"Here's the list MiLord:\n{audList}")
 
     # Audio command Trigger
