@@ -8,6 +8,7 @@ import random
 from dotenv import load_dotenv
 from subFunctions.chatDelete.delChat import deleteMessage as delChat
 from subFunctions.cardTemp.main import replaceSVGtxt
+from subFunctions.passGen.main import passGen
 
 load_dotenv()
 userToken = os.getenv('userToken')
@@ -210,6 +211,11 @@ def messageEvent(body, say, logger):
             title=f"{ty}_Card.svg",
             initial_comment="Here's your Card, MiLord ..."
         )
+
+    # Generate random 13-digit pass
+    elif cmnd == '--passGen':
+        password = passGen()
+        say(f"Here's your password, MiLord ...\n{password}")
 
     # Invalid Command Result
     else:
