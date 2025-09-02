@@ -10,6 +10,7 @@ from subFunctions.chatDelete.delChat import deleteMessage as delChat
 from subFunctions.cardTemp.main import replaceSVGtxt
 from subFunctions.passGen.main import passGen
 
+
 load_dotenv()
 userToken = os.getenv('userToken')
 botToken = os.getenv('botToken')
@@ -37,6 +38,7 @@ audList = '\n'.join(auds.keys())
 
 with open('blankCards.json', 'r', encoding='utf-8') as j:
     blankCards = json.load(j)
+
 
 meDir = os.path.join('img', 'memes')
 
@@ -135,7 +137,7 @@ def messageEvent(body, say, logger):
     # Execute the given trigger
 
     # Function Triggers
-    if cmnd == "--del":
+    if cmnd == "--hookie":
         print("🧹 Chat delete function called.")
         delChat(userToken, channel, timeRange)
         client.files_upload_v2(
@@ -225,12 +227,13 @@ def messageEvent(body, say, logger):
     print("="*50 + "\n")
 
 
-# Test slash command function
 @app.command("/echo")
 def repeatText(ack, respond, command, say):
     # Acknowledge command request
     ack()
     say(f"{command['text']}")
+    # respond only sends private text
+    # respond(f"{command['text']}")
 
 
 @app.command("/procmenu")
@@ -254,7 +257,7 @@ def handleProcDisplay(ack, body, client):
 
 @app.action(re.compile(r".*_select"))
 def handleProcAction(ack):
-    ack()  # To pacify async selection by acknowleding it
+    ack()
 
 
 @app.view("procHandler")
@@ -383,7 +386,7 @@ def handleReveal(ack, body, client, respond):
     client.chat_postEphemeral(
         channel=body['channel']['id'],
         user=userId,
-        text=f"**{title}**\n{spoilerTxt}",
+        text=f"Spoiler Revealed: **{title}**",
         blocks=[
             {
                 "type": "section",
@@ -391,6 +394,21 @@ def handleReveal(ack, body, client, respond):
                     "type": "mrkdwn",
                     "text": f"*🔓 {title}*\n\n{spoilerTxt}"
                 }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "🗑️ Delete This"
+                        },
+                        "action_id": "deleteReveal",
+                        "style": "danger",
+                        "value": "deleteSpoilerReveal"
+                    }
+                ]
             },
             {
                 "type": "context",
@@ -405,13 +423,20 @@ def handleReveal(ack, body, client, respond):
     )
 
 
-@app.action("hideSpoiler")
-def handleHideSpoiler(ack, respond):
+@app.action("deleteReveal")
+def handledeleteReveal(ack, respond):
     """
-    handle hiding spoiler again (you can add this button)
+    handle deleting the ephemeral spoiler reveal message
     """
     ack()
-    respond("Spoiler hidden again! 👻", delete_original=True)
+
+    # Delete the ephemeral message by responding with delete_original=True
+    respond(
+        text="Spoiler deleted! 👻",
+        delete_original=True,
+        response_type="ephemeral"
+    )
+    print(f"🗑️ User deleted their spoiler reveal message")
 
 
 def main():
