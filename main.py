@@ -300,6 +300,120 @@ def handleProcSubmission(ack, body, view, client):
         )
 
 
+@app.command("/spoiler")
+def handleSpoiler(ack, respond, command, client):
+    """
+    Handle the /spoiler slash command
+
+    When user types: /spoiler [test]
+    """
+    # Acknowledge the command immediately (required within 3 seconds)
+    ack()
+
+    # Extract the spoiler text from command
+    spoilerTxt = command['text'].strip()
+
+    if not spoilerTxt:
+        # If no text provided, show error message
+        respond(
+            "Please provide text for the spoiler. Usage: `/spoiler {message to be sent}`")
+        return
+
+    # Optional: Extract title if provided in brackets
+    title = "Spoiler Alert! 🫣"
+    if '[' and ']' in spoilerTxt:
+        # Format: /spoiler hidden text [Custom Title]
+        pass
+
+    # Create the spoiler message using Block Kit
+    spoilerBlocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"*{title}*\n_Invisible, init._"
+            }
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                            "type": "plain_text",
+                            "text": "🔍 Reveal Spoiler"
+                    },
+                    "action_id": "revealSpoiler",
+                    "style": "primary",
+                    # store spoiler text in button value (limited to 2000 chars)
+                    "value": json.dumps({
+                        "spoilerTxt": spoilerTxt,
+                        "title": title,
+                        "revealedBy": []
+                    })
+                }
+            ]
+        }
+    ]
+
+    # Post the spoiler message to the channel
+    client.chat_postMessage(
+        channel=command['channel_id'],
+        blocks=spoilerBlocks,
+        text=f"Spoiler: {title}"
+    )
+
+
+@app.action("revealSpoiler")
+def handleReveal(ack, body, client, respond):
+    """
+    Handle when user clicks the "Reveal Spoiler" button
+    this sends an ephemeral message only visible to the clicker
+    """
+    # Acknowledge the button click
+    ack()
+
+    # Extract spoiler data from button value
+    spoilerData = json.loads(body['actions'][0]['value'])
+    spoilerTxt = spoilerData['spoilerTxt']
+    title = spoilerData['title']
+    userId = body['user']['id']
+
+    # Send ephemeral message (only visible to the user who clicked)
+    client.chat_postEphemeral(
+        channel=body['channel']['id'],
+        user=userId,
+        text=f"**{title}**\n{spoilerTxt}",
+        blocks=[
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*🔓 {title}*\n\n{spoilerTxt}"
+                }
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "_This spoiler only visible to you, init._"
+                    }
+                ]
+            }
+        ]
+    )
+
+
+@app.action("hideSpoiler")
+def handleHideSpoiler(ack, respond):
+    """
+    handle hiding spoiler again (you can add this button)
+    """
+    ack()
+    respond("Spoiler hidden again! 👻", delete_original=True)
+
+
 def main():
     print("-"*50)
     handler = SocketModeHandler(app, appToken)
