@@ -1,0 +1,16 @@
+{
+    "userIds": {
+        "userId1": {
+            "name": "userName1",
+            "emoji": "💀"
+        },
+        "userId2": {
+            "name": "userName2",
+            "emoji": "🤠"
+        },
+        "userId3": {
+            "name": "userName3",
+            "emoji": "🤖"
+        }
+    }
+}

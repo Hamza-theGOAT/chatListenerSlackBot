@@ -39,6 +39,9 @@ audList = '\n'.join(auds.keys())
 with open('blankCards.json', 'r', encoding='utf-8') as j:
     blankCards = json.load(j)
 
+with open('parems.json', 'r', encoding='utf-8') as j:
+    parems = json.load(j)
+
 
 meDir = os.path.join('img', 'memes')
 
@@ -315,6 +318,9 @@ def handleSpoiler(ack, respond, command, client):
 
     # Extract the spoiler text from command
     spoilerTxt = command['text'].strip()
+    userId = command['user_id']
+    userName = command['user_name']
+    userEmot = "🫣"
 
     if not spoilerTxt:
         # If no text provided, show error message
@@ -323,11 +329,11 @@ def handleSpoiler(ack, respond, command, client):
         return
 
     # Optional: Extract title if provided in brackets
-    title = "Spoiler Alert! 🫣"
-    if '[' and ']' in spoilerTxt:
-        # Format: /spoiler hidden text [Custom Title]
-        pass
+    if userId in parems['userIds']:
+        userName = parems['userIds'][userId]['name']
+        userEmot = parems['userIds'][userId]['emoji']
 
+    title = f"{userName}: Spoiler Alert! {userEmot}"
     # Create the spoiler message using Block Kit
     spoilerBlocks = [
         {
@@ -432,7 +438,7 @@ def handledeleteReveal(ack, respond):
 
     # Delete the ephemeral message by responding with delete_original=True
     respond(
-        text="Spoiler deleted! 👻",
+        # text="Spoiler deleted! 👻",
         delete_original=True,
         response_type="ephemeral"
     )
