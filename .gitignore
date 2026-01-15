@@ -1,0 +1,8 @@
+# Files
+.env
+test.py
+
+# Folders
+assets
+test
+__pycache__/

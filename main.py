@@ -1,0 +1,452 @@
+from slack_sdk import WebClient
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+import os
+import json
+import re
+import random
+from dotenv import load_dotenv
+from func.chatDelete.delChat import deleteMessage as delChat
+from func.cardTemp.main import replaceSVGtxt
+from func.passGen.main import passGen
+
+
+load_dotenv()
+userToken = os.getenv('userToken')
+botToken = os.getenv('botToken')
+appToken = os.getenv('socketToken')
+userIDs = os.getenv('userID').split(',')
+timeRange = int(os.getenv('timeRange'), 10)
+
+client = WebClient(token=botToken)
+
+with open('assets/json/proclamations.json', 'r', encoding='utf-8') as j:
+    proc = json.load(j)
+procList = '\n'.join(proc.keys())
+procHeads = []
+for key, val in proc.items():
+    for sKey, sVal in val.items():
+        procHeads.append(sKey)
+
+with open('assets/json/picPaths.json', 'r') as j:
+    pics = json.load(j)
+picList = '\n'.join(pics.keys())
+
+with open('assets/json/audPaths.json', 'r') as j:
+    auds = json.load(j)
+audList = '\n'.join(auds.keys())
+
+with open('json/blankCards.json', 'r', encoding='utf-8') as j:
+    blankCards = json.load(j)
+
+with open('assets/json/parems.json', 'r', encoding='utf-8') as j:
+    parems = json.load(j)
+
+
+meDir = os.path.join('img', 'memes')
+
+
+print(f'BotToken: {botToken}')
+print(f'SocketToken: {appToken}')
+print(f'UserID: {userIDs}')
+# print(f'Commandments: {cmnds}')
+# print(f'Commandments: {auds}')
+
+# Initialize the app
+app = App(token=botToken)
+
+
+def slackListView(data: dict, channelID=None):
+    blocks = []
+    for key, val in data.items():
+        keyL = [
+            {"text": {"type": "plain_text", "text": cmd}, "value": cmd}
+            for cmd in list(val.keys())
+        ]
+        elm = {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Choose {key}:*"},
+            "accessory": {
+                "type": "static_select",
+                "action_id": f"{key}_select",
+                "placeholder": {"type": "plain_text", "text": f"Select {key}"},
+                "options": keyL
+            }
+        }
+        blocks.append(elm)
+
+    modalView = {
+        "type": "modal",
+        "callback_id": "procHandler",
+        "title": {"type": "plain_text", "text": "Multiple Selections"},
+        "submit": {"type": "plain_text", "text": "Submit"},
+        "close": {"type": "plain_text", "text": "Cancel"},
+        "blocks": blocks
+    }
+
+    # Store the original channel in private_metadata
+    if channelID:
+        modalView["private_metadata"] = channelID
+
+    return modalView
+
+
+def listDir(cmnd):
+    folders = cmnd.split('/')[1:]
+    path = os.path.join(*folders)
+    dirz = '\n'.join(os.listdir(path))
+
+    print(f"User Requested List of directories in '{path}'")
+    return dirz
+
+
+@app.event("message")
+def messageEvent(body, say, logger):
+    print("\n" + "="*50)
+    print("📩 ANY MESSAGE EVENT RECEIVED!")
+    print("="*50)
+
+    event = body.get('event', {})
+    curUser = event.get('user')
+    text = event.get('text', '')
+    channel = event.get('channel', '')
+    chnlTy = event.get('channel_type')
+    subtype = event.get('subtype')
+    botID = event.get('bot_id')
+
+    # Skip messages without text
+    if not text or not text.startswith('--'):
+        print("📝 Skipping message without text/Command")
+        return
+    # Skip bot messages
+    if ('[bot]' not in text) and (botID or subtype == 'bot_message'):
+        print("🤖 Skipping bot message")
+        return
+    if curUser not in userIDs:
+        print(f"Wrong user (got {curUser}, expected: {userIDs})")
+        say("The Light does not shine upon thee!!!")
+        return
+
+    cmnd = re.search(r"--\S+", text)
+    cmnd = cmnd.group() if cmnd else text
+
+    print(f"✅ Processing message from user: {curUser}")
+
+    print(f"🔍 Event details:")
+    print(f"  - Text: '{text}'")
+    print(f"  - Command: '{cmnd}'")
+    print(f"  - Channel: {channel}")
+
+    # Execute the given trigger
+
+    # Function Triggers
+    if "--hookie" in cmnd:
+        cap = 0
+        m = re.search(r"\[(\d+)\]", text)
+        if m:
+            cap = int(m.group(1))
+
+        print(f"🧹 Chat delete function called with cap of [{cap}].")
+        delChat(userToken, channel, timeRange, cap)
+        if cap < 1:
+            client.files_upload_v2(
+                channel=channel,
+                file=pics['--nuke'],
+                title="I am death, destroyer of both worlds",
+                initial_comment=proc['hindu']['--judgement']
+            )
+
+    # Written Lines Triggers
+    elif cmnd == "--comL":
+        print("User Requested List of Commands")
+        say(f"Here are the list of Commands, MiLord ...\n{procList}")
+    elif cmnd in procHeads:
+        for key, val in proc.items():
+            if cmnd in val:
+                say(val[cmnd])
+
+    # List of sub-directories Trigger
+    elif "--list/" in cmnd:
+        dirz = listDir(cmnd)
+        say(f"Here's the list of sub-directories, MiLord...\n{dirz}")
+
+    # Random Meme request Trigger
+    elif cmnd.startswith("--meme"):
+        path = os.path.join(meDir, *cmnd.split('/')[1:])
+        print(f"Extracted Path: {path}")
+        if not os.path.isdir(path):
+            path = meDir
+        img = random.choice([f for f in os.listdir(path)])
+        imgPath = os.path.join(path, img)
+        print("🖼️ Sending image to Slack channel...")
+        client.files_upload_v2(
+            channel=channel,
+            file=imgPath,
+            title="Here's your meme, MiLord",
+            initial_comment="Behold thy meme!"
+        )
+
+    # List of audio commands request Trigger
+    elif cmnd == '--sayL':
+        print("The Lord has requested the list of audios")
+        say(f"Here's the list MiLord:\n{audList}")
+
+    # Audio command Trigger
+    elif cmnd.startswith('--say'):
+        cmnd = cmnd.split('/')[1:][0]
+        print(f"Audio Command Received: {cmnd}")
+        if cmnd in auds:
+            client.files_upload_v2(
+                channel=channel,
+                file=auds[cmnd],
+                title=f"{cmnd}.mp3",
+                initial_comment="Here's your GOAT'ed words, MiLord ..."
+            )
+        else:
+            say("Invalid Audio Command, MiLord!")
+
+    # Blank Que Game
+    elif cmnd.startswith('--card/'):
+        ty = cmnd.split('/')[1:][0]
+        topTxt = random.choice(blankCards[ty]['blanks'])
+        botTxt = random.choice(blankCards[ty]['fillWords'])
+        maxChars = blankCards[ty]['maxChars']
+        lineHeight = blankCards[ty]['lineHeight']
+        img = blankCards[ty]['cardImg']
+        imgMod = blankCards[ty]['cardImgMod']
+        imgModp = imgMod.replace('.svg', '.png')
+        replaceSVGtxt(img, topTxt, botTxt, imgMod, maxChars, lineHeight)
+        client.files_upload_v2(
+            channel=channel,
+            file=imgModp,
+            title=f"{ty}_Card.svg",
+            initial_comment="Here's your Card, MiLord ..."
+        )
+
+    # Generate random 13-digit pass
+    elif cmnd == '--passGen':
+        password = passGen()
+        say(f"Here's your password, MiLord ...\n{password}")
+
+    # Invalid Command Result
+    else:
+        say("Given Command holds no action!")
+        print(f"❌ Trigger not found in text: '{text}'")
+
+    print("="*50 + "\n")
+
+
+@app.command("/echo")
+def repeatText(ack, respond, command, say):
+    # Acknowledge command request
+    ack()
+    say(f"{command['text']}")
+    # respond only sends private text
+    # respond(f"{command['text']}")
+
+
+@app.command("/procmenu")
+def handleProcDisplay(ack, body, client):
+    # Immediate acknowledgment
+    ack()
+
+    try:
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=slackListView(proc, body["channel_id"])
+        )
+    except Exception as e:
+        print(f"Modal error: {e}")
+        client.chat_postEphemeral(
+            channel=body["channel_id"],
+            user=body["user_id"],
+            text="❌ Modal failed to open. Please try again."
+        )
+
+
+@app.action(re.compile(r".*_select"))
+def handleProcAction(ack):
+    ack()
+
+
+@app.view("procHandler")
+def handleProcSubmission(ack, body, view, client):
+    ack()
+
+    values = view["state"]["values"]
+    # print(f"Value Values Returned:\n{values}")
+
+    # Get the original channel from private_metadata
+    ogCh = view.get("private_metadata")
+    if not ogCh:
+        ogCh = body["user"]["id"]
+
+    selections = {}
+
+    # Extract all selections
+    for blockID, blockData in values.items():
+        for actionID, actionData in blockData.items():
+            if actionData.get("selected_option"):
+                # Get the category name (remove "_select" suffix)
+                category = actionID.replace("_select", "")
+                selectedKey = actionData["selected_option"]["value"]
+
+                # Get the actual value from your proc data
+                if category in proc and selectedKey in proc[category]:
+                    selections[category] = {
+                        "key": selectedKey,
+                        "value": proc[category][selectedKey]
+                    }
+
+    if selections:
+        for category, selection in selections.items():
+            # Post the actual content from your JSON
+            client.chat_postMessage(
+                channel=ogCh,
+                text=f"🎯 {category.title()}: {selection['key']}\n{selection['value']}"
+            )
+    else:
+        client.chat_postMessage(
+            channel=ogCh,
+            text="❌ <@{body['user']['id']}> made no selections!"
+        )
+
+
+@app.command("/spoiler")
+def handleSpoiler(ack, respond, command, client):
+    """
+    Handle the /spoiler slash command
+
+    When user types: /spoiler [test]
+    """
+    # Acknowledge the command immediately (required within 3 seconds)
+    ack()
+
+    # Extract the spoiler text from command
+    spoilerTxt = f"`{command['text'].strip()}`"
+    userId = command['user_id']
+    userName = command['user_name']
+    userEmot = "🫣"
+
+    if not spoilerTxt:
+        # If no text provided, show error message
+        respond(
+            "Please provide text for the spoiler. Usage: `/spoiler {message to be sent}`")
+        return
+
+    # Optional: Extract title if provided in brackets
+    if userId in parems['userIds']:
+        userName = parems['userIds'][userId]['name']
+        userEmot = parems['userIds'][userId]['emoji']
+
+    title = f"{userName} {userEmot}: _Invisible, init._"
+    # Create the spoiler message using Block Kit
+    spoilerBlocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": title
+            }
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                            "type": "plain_text",
+                            "text": "🔍"
+                    },
+                    "action_id": "revealSpoiler",
+                    "style": "primary",
+                    # store spoiler text in button value (limited to 2000 chars)
+                    "value": json.dumps({
+                        "spoilerTxt": spoilerTxt,
+                        "title": title,
+                        "revealedBy": []
+                    })
+                }
+            ]
+        }
+    ]
+
+    # Post the spoiler message to the channel
+    client.chat_postMessage(
+        channel=command['channel_id'],
+        blocks=spoilerBlocks,
+        text=f"Spoiler: {title}"
+    )
+
+
+@app.action("revealSpoiler")
+def handleReveal(ack, body, client, respond):
+    """
+    Handle when user clicks the "Reveal Spoiler" button
+    this sends an ephemeral message only visible to the clicker
+    """
+    # Acknowledge the button click
+    ack()
+
+    # Extract spoiler data from button value
+    spoilerData = json.loads(body['actions'][0]['value'])
+    spoilerTxt = spoilerData['spoilerTxt']
+    title = spoilerData['title']
+    userId = body['user']['id']
+
+    # Send ephemeral message (only visible to the user who clicked)
+    client.chat_postEphemeral(
+        channel=body['channel']['id'],
+        user=userId,
+        text=f"Spoiler Revealed: **{title}**",
+        blocks=[
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*🔓 You may see now...*\n\n{spoilerTxt}"
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "🗑️"
+                        },
+                        "action_id": "deleteReveal",
+                        "style": "danger",
+                        "value": "deleteSpoilerReveal"
+                    }
+                ]
+            }
+        ]
+    )
+
+
+@app.action("deleteReveal")
+def handledeleteReveal(ack, respond):
+    """
+    handle deleting the ephemeral spoiler reveal message
+    """
+    ack()
+
+    # Delete the ephemeral message by responding with delete_original=True
+    respond(
+        # text="Spoiler deleted! 👻",
+        delete_original=True,
+        response_type="ephemeral"
+    )
+    print(f"🗑️ User deleted their spoiler reveal message")
+
+
+def main():
+    print("-"*50)
+    handler = SocketModeHandler(app, appToken)
+    handler.start()
+
+
+if __name__ == '__main__':
+    main()
