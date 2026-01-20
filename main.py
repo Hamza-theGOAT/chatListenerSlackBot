@@ -12,11 +12,11 @@ from func.passGen.main import passGen
 
 
 load_dotenv()
-userToken = os.getenv('userToken')
-botToken = os.getenv('botToken')
-appToken = os.getenv('socketToken')
-userIDs = os.getenv('userID').split(',')
-timeRange = int(os.getenv('timeRange'), 10)
+userToken = os.getenv('USER_TOKEN')
+botToken = os.getenv('BOT_TOKEN')
+appToken = os.getenv('SOCKET_TOKEN')
+userIDs = os.getenv('USER_IDS').split(',')
+timeRange = int(os.getenv('TIME_RANGE'), 10)
 
 client = WebClient(token=botToken)
 
